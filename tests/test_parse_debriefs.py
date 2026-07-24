@@ -166,6 +166,64 @@ Cleared everything out today, nothing pending.
     assert row["inbox_sensitive"] is None
 
 
+def test_inbox_counts_found_on_next_line_when_header_line_is_blank_after(tmp_path):
+    # Regression: an earlier version of the skip-blank-lines loop had its
+    # `break` outside the `if`, so it only ever inspected exactly one line
+    # and could never actually reach a summary sentence sitting past a
+    # blank line. This fixture reproduces that shape directly.
+    write(
+        tmp_path,
+        "2026-01-09.md",
+        """---
+updated: 2026-01-09
+---
+
+## 📬 Inbox
+
+12 msgs (2 unread, 1 sensitive)
+""",
+    )
+
+    rows = parse(tmp_path)
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["has_inbox"] is True
+    assert row["inbox_count"] == 12
+    assert row["inbox_unread"] == 2
+    assert row["inbox_sensitive"] == 1
+
+
+def test_inbox_counts_not_pulled_from_deep_unrelated_content(tmp_path):
+    # The blank-line skip must be bounded: it should not wander past a
+    # handful of lines into unrelated body text and misattribute a count
+    # that has nothing to do with the Inbox section.
+    write(
+        tmp_path,
+        "2026-01-10.md",
+        """---
+updated: 2026-01-10
+---
+
+## 📬 Inbox
+
+
+Some unrelated line one.
+Some unrelated line two.
+99 msgs (99 unread, 99 sensitive) mentioned way later, not the real summary.
+""",
+    )
+
+    rows = parse(tmp_path)
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["has_inbox"] is True
+    assert row["inbox_count"] is None
+    assert row["inbox_unread"] is None
+    assert row["inbox_sensitive"] is None
+
+
 def test_date_like_but_invalid_calendar_filename_falls_back_to_frontmatter_updated(tmp_path):
     # "2026-02-30" has the right shape (YYYY-MM-DD) but Feb 30 does not exist,
     # so it does not parse as a real date and should fall back to frontmatter.

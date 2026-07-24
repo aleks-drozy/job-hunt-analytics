@@ -59,13 +59,14 @@ def _extract_inbox_counts(text):
             continue
 
         # The summary sentence is either inline on the header line itself, or
-        # on the next non-blank line. Only those candidates are inspected -
-        # never the rest of the section body.
+        # on the next non-blank line. Skip blank lines (bounded to 3, so a
+        # missing summary can't fall through into an unrelated later
+        # section) - never read the rest of the section body otherwise.
         candidates = [line]
-        for next_line in lines[i + 1:]:
+        for next_line in lines[i + 1:i + 4]:
             if next_line.strip():
                 candidates.append(next_line)
-            break
+                break
 
         for candidate in candidates:
             match = _INBOX_COUNT_RE.search(candidate)
