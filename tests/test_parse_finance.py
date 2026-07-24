@@ -147,6 +147,50 @@ def test_only_log_section_bullets_are_parsed_decoys_excluded(tmp_path):
     assert 13.0 not in [e["buffer_pct"] for e in result]
 
 
+def test_wrapped_entry_spanning_multiple_physical_lines_still_extracts_percentage(tmp_path):
+    # Regression: found against the real vault, not the synthetic fixtures.
+    # Real FINANCE.md log entries are long prose that wraps across several
+    # physical lines in the markdown source (normal editor line-wrapping),
+    # e.g.:
+    #   - 2026-01-14 - snapshot update: moved some money around, stocks
+    #     shifted a little too. Buffer jumps from 40% to 95% of the
+    #     target -- largest move yet.
+    # A continuation line does not itself start with "- YYYY-MM-DD", so the
+    # entry-matching regex must join it onto the entry it belongs to rather
+    # than silently ignore it -- which is what was happening: buffer_pct
+    # came back None for every real entry whose percentage happened to sit
+    # on a wrapped line rather than the bullet's opening line.
+    body = (
+        "- 2026-01-14 - snapshot update: moved some money around, stocks\n"
+        "  shifted a little too. Buffer jumps from 40% to 95% of the\n"
+        "  target -- largest move yet.\n"
+        "- 2026-01-15 - a normal single-line entry, buffer steady (30%).\n"
+    )
+    path = _write_finance_md(tmp_path, body)
+
+    result = parse(path)
+
+    assert len(result) == 2
+    assert result[0]["date"] == "2026-01-14"
+    assert result[0]["buffer_pct"] == 95.0
+    assert result[1]["date"] == "2026-01-15"
+    assert result[1]["buffer_pct"] == 30.0
+
+
+def test_wrapped_entry_income_change_marker_on_a_continuation_line_is_found(tmp_path):
+    body = (
+        "- 2026-01-16 - long note about groceries and a small purchase,\n"
+        "  nothing eventful here really, just filler text to wrap the\n"
+        "  line. Income changed today, new source confirmed.\n"
+    )
+    path = _write_finance_md(tmp_path, body)
+
+    result = parse(path)
+
+    assert len(result) == 1
+    assert result[0]["income_changed"] is True
+
+
 def test_entry_dict_shape_is_minimal(tmp_path):
     body = "- 2026-01-13 - Plain entry with no percentage and no income event.\n"
     path = _write_finance_md(tmp_path, body)

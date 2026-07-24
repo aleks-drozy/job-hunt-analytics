@@ -93,21 +93,43 @@ def parse(path) -> list[dict]:
         {"date": "YYYY-MM-DD", "buffer_pct": float | None, "income_changed": bool}
 
     No euro amounts, no raw prose, and no other fields are ever included.
+
+    Real log entries are prose that wraps across several physical lines in
+    the markdown source (normal editor line-wrapping) -- a continuation
+    line does not itself start with "- YYYY-MM-DD". Those lines are joined
+    onto the entry they belong to before extraction runs, so a percentage
+    or income-change marker sitting on a wrapped line is not silently
+    missed (this was a real bug: found against the live vault, where every
+    real entry's buffer_pct came back None because extraction only ever
+    saw each bullet's opening line).
     """
     with open(path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
     entries: list[dict] = []
     in_log_section = False
+    current: Optional[dict] = None  # {"date": str, "text": str} accumulator
+
+    def flush():
+        if current is not None:
+            entries.append({
+                'date': current['date'],
+                'buffer_pct': _extract_buffer_pct(current['text']),
+                'income_changed': _income_changed(current['text']),
+            })
 
     for raw_line in lines:
         line = raw_line.rstrip('\n')
 
         if _LOG_HEADING_RE.match(line):
+            flush()
+            current = None
             in_log_section = True
             continue
 
         if in_log_section and _HEADING_RE.match(line):
+            flush()
+            current = None
             in_log_section = False
             continue
 
@@ -115,14 +137,20 @@ def parse(path) -> list[dict]:
             continue
 
         m = _ENTRY_RE.match(line)
-        if not m:
+        if m:
+            flush()
+            current = {'date': m.group(1), 'text': m.group(2)}
             continue
 
-        date, entry_text = m.group(1), m.group(2)
-        entries.append({
-            'date': date,
-            'buffer_pct': _extract_buffer_pct(entry_text),
-            'income_changed': _income_changed(entry_text),
-        })
+        if current is not None and line.strip():
+            # A continuation line of the entry currently being accumulated.
+            current['text'] += ' ' + line.strip()
+        else:
+            # Blank line (or a non-entry line before any entry has started)
+            # ends accumulation, so a stray paragraph break can't silently
+            # merge two unrelated entries.
+            flush()
+            current = None
 
+    flush()
     return entries
