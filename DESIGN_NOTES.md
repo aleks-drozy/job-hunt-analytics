@@ -69,8 +69,16 @@ applied_date (nullable), status (enum), status_date (only from an explicit paren
 date on the Status cell — does NOT fall back to applied_date when absent), followup_due
 (nullable). NO notes/link-raw/email fields at all — never parsed into the DB.
 
-`ledger_ops`: topic_slug, first_raised, times_raised, status (enum), close_date (nullable).
-NO notes field.
+`ledger_ops`: topic_slug, first_raised, times_raised, status, close_date (nullable).
+NO notes field. **Correction (found by adversarial review of the sanitize gate,
+2026-07-24): `status` is NOT a closed enum.** `parse_ledger.py` copies the raw markdown
+status cell verbatim (its own test deliberately proves an unrecognized value like
+"archived" passes through unchanged, rather than erroring) — in practice real LEDGER.md
+status values have always been short single words (open/done/snoozed), but nothing
+enforces that. This is a live consideration for Task 7's manual export review, not
+just a documentation nit: `ledger_ops.csv` has no `company` column, so the gate's
+positional anon-pattern check never runs on it, and only the generic regexes / banned
+list would catch anything sensitive that somehow ended up in that cell.
 
 `finance_events`: date, buffer_pct (nullable float), income_changed (bool).
 NO euro-amount field anywhere in this table, ever — not even in the private DB, since
