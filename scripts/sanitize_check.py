@@ -14,18 +14,29 @@ Every invocation first runs a POSITIVE CONTROL: a planted-violation file
 is generated and scanned, and if the scanner fails to flag every planted
 pattern the run aborts with exit 2. An instrument that cannot see a
 planted leak must not be trusted to clear a real export.
+
+Rows are parsed with csv.reader (not str.split(",")) so quoted commas
+and quoting in general are handled per RFC4180, and every data row's
+cell count is checked against the header - a row with a smuggled extra
+field is a finding ([row_length]) even if none of the other rules
+happen to fire on it. Every line is Unicode-NFKC-normalized before any
+regex or substring check runs, so fullwidth homoglyphs (e.g. the
+fullwidth '@') can't be used to dodge the generic shape checks.
 """
 import argparse
+import csv
+import io
 import json
 import re
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 
 GENERIC = [
     ("email", re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")),
-    ("currency", re.compile(r"(?:EUR|GBP|USD|[€£$])\s?\d")),
-    ("currency_post", re.compile(r"\d\s?(?:EUR|GBP|USD|€|£)")),
+    ("currency", re.compile(r"(?:EUR|GBP|USD|[€£$])\s*\d")),
+    ("currency_post", re.compile(r"\d\s*(?:EUR|GBP|USD|€|£)")),
     ("iban", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{10,30}\b")),
     ("phone", re.compile(r"\+\d{2,3}[\s-]?\d{2,4}[\s-]?\d{3}")),
 ]
@@ -48,16 +59,44 @@ FORBIDDEN_COLUMNS = {"role_title", "topic_slug", "notes", "company_real",
 ANON_RE = re.compile(r"^Company [A-Z]{1,2}$")
 
 
+def _collapse_ws(s):
+    """Collapse any run of whitespace (including NBSP and other Unicode
+    whitespace) to a single ASCII space, so 'Acme  Robotics' (double
+    space, or NBSP, or a tab) still matches 'Acme Robotics'."""
+    return re.sub(r"\s+", " ", s)
+
+
 def scan(export_dir, banned_terms):
     export_dir = Path(export_dir)
     findings = []
-    banned_lower = [b.lower() for b in banned_terms if b.strip()]
 
-    for path in sorted(export_dir.glob("*.csv")):
-        lines = path.read_text(encoding="utf-8").splitlines()
+    if not export_dir.is_dir():
+        findings.append("<export_dir>  [missing_export_dir]  %s does not "
+                        "exist or is not a directory" % export_dir)
+        return findings
+
+    csv_paths = sorted(export_dir.glob("*.csv"))
+    if not csv_paths:
+        findings.append("<export_dir>  [empty_export_dir]  no CSV files "
+                        "found in %s" % export_dir)
+        return findings
+
+    banned_lower = [_collapse_ws(b.lower()) for b in banned_terms if b.strip()]
+
+    for path in csv_paths:
+        raw_text = path.read_text(encoding="utf-8")
+        # Normalize fullwidth/compatibility Unicode (e.g. fullwidth '@' or
+        # fullwidth digits) to their ASCII equivalents before any check
+        # runs, so homoglyph substitution can't dodge the regexes below.
+        text = unicodedata.normalize("NFKC", raw_text)
+        lines = text.splitlines()
         if not lines:
             continue
-        header = [h.strip() for h in lines[0].split(",")]
+
+        # Parse with the csv module (not str.split(",")) so quoted commas
+        # are respected rather than assumed away.
+        rows = list(csv.reader(io.StringIO(text)))
+        header = [h.strip() for h in rows[0]] if rows else []
 
         expected = EXPECTED_COLUMNS.get(path.name)
         if expected is not None and header != expected:
@@ -69,42 +108,61 @@ def scan(export_dir, banned_terms):
                                 % (path.name, col))
 
         company_idx = header.index("company") if "company" in header else None
+
         for n, line in enumerate(lines, start=1):
-            low = line.lower()
             for name, rx in GENERIC:
                 m = rx.search(line)
                 if m:
                     findings.append("%s:%d  [%s]  %s"
                                     % (path.name, n, name, m.group(0)))
+            low = _collapse_ws(line.lower())
             for term in banned_lower:
                 if term in low:
                     findings.append("%s:%d  [banned]  %s"
                                     % (path.name, n, term))
-            if company_idx is not None and n > 1 and line.strip():
-                cells = line.split(",")
-                if len(cells) > company_idx and \
-                        not ANON_RE.match(cells[company_idx].strip()):
-                    findings.append("%s:%d  [anon_pattern]  %s"
-                                    % (path.name, n, cells[company_idx]))
+
+            if n > 1 and line.strip():
+                row = rows[n - 1] if n - 1 < len(rows) else None
+                if row is None or len(row) != len(header):
+                    findings.append("%s:%d  [row_length]  expected %d "
+                                    "field(s), got %d"
+                                    % (path.name, n, len(header),
+                                       0 if row is None else len(row)))
+                elif company_idx is not None and len(row) > company_idx:
+                    if not ANON_RE.match(row[company_idx].strip()):
+                        findings.append("%s:%d  [anon_pattern]  %s"
+                                        % (path.name, n, row[company_idx]))
     return findings
 
 
 def positive_control(workdir=None):
     """Prove the scanner can still see. Returns True only if every planted
     pattern is flagged."""
-    planted = ("note\n"
-               "reach control-plant@fabricated-control.test\n"
-               "EUR 9,876 moved\n"
-               "IE29AIBK93115212345678\n"
-               "call +353 86 1234567\n"
-               "controlbannedco appears here\n")
+    control_notes = ("note\n"
+                     "reach control-plant@fabricated-control.test\n"
+                     "EUR 9,876 moved\n"
+                     "9876 EUR\n"
+                     "IE29AIBK93115212345678\n"
+                     "call +353 86 1234567\n"
+                     "controlbannedco appears here\n")
+    # A realistically-named CSV so the structural rules (column
+    # whitelist, forbidden columns, row length, anon-id pattern) get
+    # planted-and-checked too, not just the generic regex rules.
+    control_applications = (
+        "app_id,company,role_title\n"
+        "A001,Not An Anon Company,Graduate Engineer\n"
+        "A002,Company A,Extra,Field\n"
+    )
     with tempfile.TemporaryDirectory(dir=workdir) as td:
-        p = Path(td) / "control.csv"
-        p.write_text(planted, encoding="utf-8")
+        (Path(td) / "control.csv").write_text(control_notes,
+                                              encoding="utf-8")
+        (Path(td) / "applications.csv").write_text(control_applications,
+                                                    encoding="utf-8")
         found = scan(Path(td), banned_terms=["ControlBannedCo"])
         rules_hit = {f.split("[", 1)[1].split("]")[0] for f in found}
-        return {"email", "currency", "iban", "phone",
-                "banned"}.issubset(rules_hit)
+        return {"email", "currency", "currency_post", "iban", "phone",
+                "banned", "columns", "forbidden_column", "anon_pattern",
+                "row_length"}.issubset(rules_hit)
 
 
 def main():
