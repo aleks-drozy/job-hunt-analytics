@@ -118,7 +118,7 @@ def _parse_row(cells: list[str]) -> dict:
     def cell(i: int) -> str:
         return cells[i] if i < len(cells) else ""
 
-    company = _strip_strikethrough(cell(0))
+    company = _clean_company_name(cell(0))
     role_title = cell(1).strip()
     channel = _classify_channel(cell(2))
     applied_date = _parse_iso_date(cell(3))
@@ -138,11 +138,21 @@ def _parse_row(cells: list[str]) -> dict:
     }
 
 
-def _strip_strikethrough(text: str) -> str:
-    match = _STRIKETHROUGH_RE.search(text)
+def _clean_company_name(text: str) -> str:
+    """Strip markdown emphasis wrapping a company cell (strikethrough for a
+    skipped/withdrawn row, or bold used to flag a row visually) so the same
+    real company never parses to two different string keys depending on
+    which emphasis happened to be applied that day -- the anon-ID mapping
+    treats company name as an exact key.
+    """
+    stripped = text.strip()
+    match = _STRIKETHROUGH_RE.search(stripped)
     if match:
-        return match.group(1).strip()
-    return text.strip()
+        stripped = match.group(1).strip()
+    match = _BOLD_RE.search(stripped)
+    if match:
+        stripped = match.group(1).strip()
+    return stripped
 
 
 def _derive_tier(role_title: str) -> str:

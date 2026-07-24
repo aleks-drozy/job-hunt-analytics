@@ -60,6 +60,19 @@ def test_struck_through_skipped_row_strips_markup(tmp_path):
     assert r["status_date"] == "2026-07-09"
 
 
+def test_bold_wrapped_company_name_strips_markup(tmp_path):
+    # Regression: found against the real vault, not the synthetic fixtures --
+    # a company cell can itself be bold-wrapped (e.g. to flag it visually in
+    # the tracker), and the anon-ID mapping treats company name as an exact
+    # key, so "**Acme Robotics**" and "Acme Robotics" must not become two
+    # different companies.
+    row = "| **Acme Robotics** | Store Assistant | Rezoomo | 2026-07-01 | **Applied** ✅ | — | declined via message |"
+    path = _write(tmp_path, [row])
+    r = parse(path)[0]
+    assert r["company"] == "Acme Robotics"
+    assert "*" not in r["company"]
+
+
 @pytest.mark.parametrize(
     "applied_cell",
     ["—", "pre-2026-07-09", "unknown (applied outside Jarvis)", ""],
