@@ -7,3 +7,4 @@ data/*.duckdb.wal
 data/company_map.json
 data/banned_terms.txt
 export/.staging/
+.worktrees/
