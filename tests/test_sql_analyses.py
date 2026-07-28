@@ -30,6 +30,24 @@ def test_channel_outcomes_counts_and_rate_siblings(tmp_path):
     assert int(li["n_total"]) == 2
     assert int(li["n_rejected"]) == 0 and int(li["n_open"]) == 1
 
+def test_tier_outcomes_counts_and_order(tmp_path):
+    """Verify tier_outcomes groups correctly, orders as entry/stretch/unspecified, and counts match fixture."""
+    out = _run(tmp_path)
+    rows = _read(out, "tier_outcomes.csv")
+    tiers = [r["tier"] for r in rows]
+    # Assert row order is exactly entry, stretch, unspecified
+    assert tiers == ["entry", "stretch", "unspecified"]
+
+    # Assert entry tier counts: A001 (applied), A003 (rejected), A006 (unknown)
+    entry = rows[0]
+    assert int(entry["n_total"]) == 3
+    assert int(entry["n_submitted"]) == 2  # applied + rejected
+    assert int(entry["n_rejected"]) == 1
+    assert int(entry["n_open"]) == 1
+    assert int(entry["n_closed"]) == 0
+    assert int(entry["n_skipped"]) == 0
+    assert int(entry["n_unknown"]) == 1
+
 def test_every_rate_column_has_numerator_and_denominator(tmp_path):
     out = _run(tmp_path)
     for f in Path(out).glob("*.csv"):
