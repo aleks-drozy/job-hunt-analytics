@@ -64,3 +64,74 @@ def test_no_results_file_has_a_company_column(tmp_path):
         with open(f, newline="", encoding="utf-8") as fh:
             header = next(csv.reader(fh))
         assert "company" not in [h.lower() for h in header], f.name
+
+
+def test_ops_close_times_days_open_and_exclusion_count(tmp_path):
+    out = _run(tmp_path)
+    rows = _read(out, "ops_close_times.csv")
+    # Only L001 is 'done' with a close_date; L002 is 'open' and excluded
+    # entirely (the query only ever looks at status='done' rows).
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["op_id"] == "L001"
+    assert r["category"] == "project"
+    assert int(r["times_raised"]) == 2
+    # date_diff('day', 2026-01-04, 2026-01-06) = 2
+    assert int(r["days_open"]) == 2
+    # No done row in this fixture lacks a close_date, so the count is 0 -
+    # but the column must exist and be asserted, not assumed away.
+    assert int(r["n_done_without_close_date"]) == 0
+
+
+def test_ops_summary_per_category_counts_and_mean_times_raised(tmp_path):
+    out = _run(tmp_path)
+    all_rows = _read(out, "ops_summary.csv")
+    rows = {r["category"]: r for r in all_rows}
+    assert set(rows.keys()) == {"project", "finance"}
+
+    project = rows["project"]  # L001: done, times_raised=2
+    assert int(project["n_total"]) == 1
+    assert int(project["n_done"]) == 1
+    assert int(project["n_open"]) == 0
+    assert int(project["n_snoozed"]) == 0
+    assert float(project["avg_times_raised"]) == 2.0
+    assert int(project["max_times_raised"]) == 2
+
+    finance = rows["finance"]  # L002: open, times_raised=1
+    assert int(finance["n_total"]) == 1
+    assert int(finance["n_done"]) == 0
+    assert int(finance["n_open"]) == 1
+    assert int(finance["n_snoozed"]) == 0
+    assert float(finance["avg_times_raised"]) == 1.0
+    assert int(finance["max_times_raised"]) == 1
+
+    # Both categories tie on n_total=1, so ORDER BY n_total DESC, category
+    # breaks the tie alphabetically: "finance" < "project".
+    assert [r["category"] for r in all_rows] == ["finance", "project"]
+
+
+def test_finance_trajectory_preserves_nulls_and_all_three_events(tmp_path):
+    out = _run(tmp_path)
+    rows = _read(out, "finance_trajectory.csv")
+    # All 3 fixture rows qualify: two have buffer_pct set, the marker-only
+    # income event (2026-01-08) has income_changed=True with a null pct.
+    assert len(rows) == 3
+    assert [r["event_date"] for r in rows] == [
+        "2026-01-05", "2026-01-08", "2026-01-09"]
+    assert float(rows[0]["buffer_pct"]) == 40.0
+    assert rows[1]["buffer_pct"] == ""  # null preserved, not dropped
+    assert rows[1]["income_changed"].lower() == "true"
+    assert float(rows[2]["buffer_pct"]) == 95.0
+
+
+def test_coverage_single_day_span_and_inbox_sums(tmp_path):
+    out = _run(tmp_path)
+    rows = _read(out, "coverage.csv")
+    assert len(rows) == 1
+    r = rows[0]
+    assert int(r["n_days"]) == 1
+    assert r["first_day"] == "2026-01-05"
+    assert r["last_day"] == "2026-01-05"
+    assert int(r["n_days_with_inbox_stats"]) == 1
+    assert int(r["total_inbox_msgs"]) == 5
+    assert int(r["total_sensitive_suppressed"]) == 0
