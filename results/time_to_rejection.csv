@@ -1,0 +1,11 @@
+app_id,tier,channel,sector,days_to_rejection,n_excluded_missing_dates
+A011,unspecified,other,fintech,0,5
+A008,stretch,other,tech,1,5
+A009,unspecified,other,consultancy,1,5
+A020,unspecified,other,big_tech,1,5
+A014,unspecified,other,big_tech,2,5
+A024,entry,other,edtech,2,5
+A017,unspecified,indeed,fintech,3,5
+A001,entry,other,tech,4,5
+A013,entry,workday,consultancy,4,5
+A007,unspecified,other,big_tech,5,5

@@ -1,0 +1,7 @@
+category,n_total,n_done,n_open,n_snoozed,avg_times_raised,max_times_raised
+other,27,18,7,2,1.85,6
+content,16,9,7,0,2.56,6
+job_search,9,4,5,0,2.44,6
+finance,6,5,1,0,2.33,5
+project,4,4,0,0,1.5,3
+life,3,1,2,0,3.33,6

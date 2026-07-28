@@ -1,0 +1,8 @@
+event_date,buffer_pct,income_changed
+2026-07-10,66.0,false
+2026-07-19,67.0,false
+2026-07-23,57.0,true
+2026-07-23,,true
+2026-07-24,88.0,false
+2026-07-24,,true
+2026-07-24,88.0,true

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Headline</title>
+<style>
+  body {
+    background: #f9f9f7;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 24px;
+  }
+  .tiles { display: flex; flex-wrap: wrap; gap: 16px; }
+  .tile {
+    background: #fcfcfb;
+    border-radius: 8px;
+    padding: 20px 24px;
+    min-width: 160px;
+  }
+  .tile .label {
+    color: #52514e;
+    font-size: 13px;
+    margin: 0 0 8px;
+  }
+  .tile .value {
+    color: #0b0b0b;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .asof {
+    color: #898781;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="tiles">
+    <div class="tile"><p class="label">Tracked</p><p class="value">50</p></div><div class="tile"><p class="label">Interviews</p><p class="value">0</p></div><div class="tile"><p class="label">Rejected</p><p class="value">15</p></div><div class="tile"><p class="label">No response yet</p><p class="value">28</p></div>
+  </div>
+  <p class="asof">As of 2026-07-31</p>
+</body>
+</html>
