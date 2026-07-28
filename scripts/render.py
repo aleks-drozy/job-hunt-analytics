@@ -325,21 +325,43 @@ def _stacked_outcome_bars(rows, category_col, title, out_path):
         texts = [str(c) if c > 0 else "" for c in counts]
         fig.add_trace(go.Bar(
             name=label, y=categories, x=counts, orientation="h",
-            # marker.line in the surface color approximates the spec's
-            # 2px surface gap between touching stacked segments - Plotly
-            # has no native inter-segment gap primitive for stacked bars,
-            # so a thin same-color outline is the closest available
-            # mechanism (documented as a deviation in the task report).
-            marker=dict(color=color, line=dict(color=SURFACE, width=1)),
+            marker=dict(color=color),
             text=texts, textposition="inside", insidetextanchor="middle",
             constraintext="both",
             insidetextfont=dict(color=_text_on_fill(color), family=FONT_FAMILY,
                                  size=12),
             hovertemplate="%{y}<br>" + label + ": %{x}<extra></extra>",
         ))
+
+    # Segment-to-segment gaps: a 2px-wide SURFACE-filled pixel strip
+    # dropped on top of the stack at each boundary between two touching
+    # (non-zero) segments, per the dataviz skill - "the gap and the ring
+    # are the mechanism; a stroke adds data-weight ink that isn't data."
+    # A boundary next to a zero-count segment isn't a real visual seam
+    # (nothing is drawn there), so those are skipped.
+    bargap = 0.5
+    half_thickness = (1 - bargap) / 2  # bar occupies (1-bargap) of the
+                                        # category's unit band, centered
+    for row_idx, r in enumerate(rows):
+        counts = [int(r[col]) for col, _, _ in OUTCOME_SEGMENTS]
+        nonzero_positions = [i for i, c in enumerate(counts) if c > 0]
+        cumulative = []
+        running = 0
+        for c in counts:
+            running += c
+            cumulative.append(running)
+        for earlier, later in zip(nonzero_positions, nonzero_positions[1:]):
+            boundary_x = cumulative[earlier]
+            fig.add_shape(
+                type="rect", xref="x", yref="y",
+                xsizemode="pixel", xanchor=boundary_x, x0=-1, x1=1,
+                y0=row_idx - half_thickness, y1=row_idx + half_thickness,
+                fillcolor=SURFACE, line_width=0, layer="above",
+            )
+
     n = len(categories)
     fig.update_layout(
-        barmode="stack", bargap=0.5,
+        barmode="stack", bargap=bargap,
         title=dict(text=title,
                    font=dict(size=18, color=INK_PRIMARY, family=FONT_FAMILY),
                    x=0, xanchor="left"),
