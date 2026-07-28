@@ -1,8 +1,13 @@
-"""One-command refresh: vault -> private DB -> sanitized export.
+"""One-command refresh: vault -> private DB -> sanitized export -> analyses.
 
-Order is load -> map -> export(staging) -> gate -> promote. The gate runs
-in LOCAL mode (private lists required); export/ is only touched after a
-clean scan, so the committed directory can never hold unchecked data.
+Order is load -> map -> export(staging) -> gate -> promote -> analyze ->
+render -> gate. The gate runs in LOCAL mode (private lists required);
+export/ is only touched after a clean scan, so the committed directory
+can never hold unchecked data. Once export/ is promoted, sql/*.sql (if
+present) is run over it to populate results/, charts/ is rendered from
+results/, and results/ is put through the same gate (reusing the export
+gate's banned list) before the run is considered clean. Charts are not
+gate-scanned - see the CI workflow comment for why.
 Exit codes: 0 ok, 2 gate/control failure, 3 human input needed (sectors).
 """
 import argparse
@@ -21,6 +26,8 @@ import duckdb  # noqa: E402
 from job_analytics.anonymize import ensure_mapped, load_map, save_map  # noqa: E402
 from job_analytics.export_public import UnmappedCompanyError, export  # noqa: E402
 from job_analytics.load_db import build  # noqa: E402
+from scripts.analyze import run_analyses  # noqa: E402
+from scripts.render import render_all  # noqa: E402
 from scripts.sanitize_check import positive_control, scan  # noqa: E402
 
 
@@ -81,6 +88,20 @@ def main():
         shutil.copy2(f, REPO / "export" / f.name)
     shutil.rmtree(staging)
     print("export promoted:", export_counts)
+
+    sql_dir = REPO / "sql"
+    if sql_dir.exists():
+        results_dir = REPO / "results"
+        row_counts = run_analyses(REPO / "export", sql_dir, results_dir)
+        print("analyses run:", row_counts)
+        render_all(results_dir, REPO / "charts")
+        results_findings = scan(results_dir, banned)
+        if results_findings:
+            for f in results_findings:
+                print(f)
+            print("GATE FAILED - results NOT committed")
+            return 2
+
     return 0
 
 

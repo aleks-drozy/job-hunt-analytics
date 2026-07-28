@@ -15,3 +15,14 @@ jobs:
       - run: python -m pytest -q
       - name: sanitize gate (generic + structural rules)
         run: python scripts/sanitize_check.py export --ci
+      # charts/*.html are intentionally NOT gate-scanned here: HTML/plotly
+      # markup (script tags, JSON blobs, node/link structure) would
+      # false-positive the CSV-shaped structural checks (column
+      # whitelists, row_length, anon_pattern) that sanitize_check.py
+      # applies to every file it scans. Chart leak coverage instead comes
+      # from tests/test_render.py, which runs the same GENERIC regexes
+      # from sanitize_check.py directly against the rendered chart HTML
+      # (see test_chart_html_passes_the_generic_leak_regexes) and already
+      # runs as part of the pytest step above.
+      - name: sanitize gate on results (generic + structural rules)
+        run: python scripts/sanitize_check.py results --ci
