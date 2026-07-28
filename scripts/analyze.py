@@ -36,9 +36,10 @@ def run_analyses(export_dir, sql_dir, results_dir):
     con = duckdb.connect()
     try:
         for view, filename in _VIEWS.items():
+            csv_path = str(export_dir / filename).replace("'", "''")
             con.execute(
                 "CREATE VIEW %s AS SELECT * FROM read_csv('%s', header=true,"
-                " nullstr='')" % (view, str(export_dir / filename).replace("\\", "\\\\")))
+                " nullstr='')" % (view, csv_path))
         counts = {}
         for sql_path in sorted(sql_dir.glob("*.sql")):
             name = sql_path.stem.split("_", 1)[1]  # 01_funnel_links -> funnel_links

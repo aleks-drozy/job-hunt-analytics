@@ -41,6 +41,33 @@ def test_runner_executes_all_sql_and_names_outputs(tmp_path):
     counts = run_analyses(ex, "sql", out)
     assert "funnel_links" in counts and "funnel_summary" in counts
     assert (out / "funnel_links.csv").exists()
+    # Verify actual row counts: funnel_links has 6 rows (4 from tracked + 2 from submitted),
+    # funnel_summary is a single summary row
+    assert counts["funnel_links"] == 6
+    assert counts["funnel_summary"] == 1
+
+def test_runner_handles_paths_with_single_quotes(tmp_path):
+    """Ensure single quotes in directory names don't crash the SQL parser."""
+    parent = tmp_path / "export_O'Brien's_data"
+    ex = parent / "export"
+    ex.mkdir(parents=True)
+    (ex / "applications.csv").write_text(APPS, encoding="utf-8")
+    (ex / "ledger_ops.csv").write_text(
+        "op_id,category,first_raised,times_raised,status,close_date\n"
+        "L001,project,2026-01-04,2,done,2026-01-06\n", encoding="utf-8")
+    (ex / "finance_events.csv").write_text(
+        "event_date,buffer_pct,income_changed\n"
+        "2026-01-05,40.0,False\n", encoding="utf-8")
+    (ex / "debrief_days.csv").write_text(
+        "day,has_focus,has_projects,has_job_search,has_life,has_finance,"
+        "has_suggestion,has_today,has_inbox,has_health,has_captures,"
+        "inbox_count,inbox_unread,inbox_sensitive\n"
+        "2026-01-05,True,True,True,True,True,True,True,True,False,False,5,1,0\n",
+        encoding="utf-8")
+    out = tmp_path / "results"
+    counts = run_analyses(ex, "sql", out)
+    assert "funnel_links" in counts and "funnel_summary" in counts
+    assert (out / "funnel_links.csv").exists()
 
 def test_funnel_links_math(tmp_path):
     ex = _fake_export(tmp_path)
