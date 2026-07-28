@@ -30,6 +30,23 @@ def test_channel_outcomes_counts_and_rate_siblings(tmp_path):
     assert int(li["n_total"]) == 2
     assert int(li["n_rejected"]) == 0 and int(li["n_open"]) == 1
 
+def test_channel_and_tier_outcome_buckets_sum_to_total(tmp_path):
+    """The 5 stacked-bar outcome buckets (n_rejected/n_open/n_closed/
+    n_skipped/n_unknown) have no bucket for status='interview'. No
+    fixture or real data currently has that status, so this passes today
+    - it's a guard: if an interview status ever appears, n_total would
+    silently outgrow the sum of buckets (a stacked bar shorter than its
+    axis position implies), and this test turns that into a loud
+    failure instead of a silent under-count."""
+    out = _run(tmp_path)
+    for name in ("channel_outcomes.csv", "tier_outcomes.csv"):
+        for r in _read(out, name):
+            bucket_sum = (int(r["n_rejected"]) + int(r["n_open"]) +
+                          int(r["n_closed"]) + int(r["n_skipped"]) +
+                          int(r["n_unknown"]))
+            assert bucket_sum == int(r["n_total"]), (name, r)
+
+
 def test_tier_outcomes_counts_and_order(tmp_path):
     """Verify tier_outcomes groups correctly, orders as entry/stretch/unspecified, and counts match fixture."""
     out = _run(tmp_path)
@@ -119,9 +136,11 @@ def test_finance_trajectory_preserves_nulls_and_all_three_events(tmp_path):
     assert [r["event_date"] for r in rows] == [
         "2026-01-05", "2026-01-08", "2026-01-09"]
     assert float(rows[0]["buffer_pct"]) == 40.0
+    assert rows[0]["income_changed"].lower() == "false"
     assert rows[1]["buffer_pct"] == ""  # null preserved, not dropped
     assert rows[1]["income_changed"].lower() == "true"
     assert float(rows[2]["buffer_pct"]) == 95.0
+    assert rows[2]["income_changed"].lower() == "false"
 
 
 def test_coverage_single_day_span_and_inbox_sums(tmp_path):

@@ -111,13 +111,23 @@ def _hex_to_rgba(hex_color, alpha):
 
 def _text_on_fill(hex_color):
     """White or ink text for a label set inside a colored fill, chosen by
-    the fill's own luminance (YIQ perceived-brightness heuristic) so a
-    label inside e.g. the light yellow/magenta/aqua segments always
-    clears contrast."""
+    a proper WCAG relative-luminance contrast calculation (not a YIQ
+    perceived-brightness heuristic, which mis-picks white on colors like
+    aqua #1baf7a - 2.82:1 against white, well under the 4.5:1 AA
+    minimum). Picks whichever of ink/white gives the higher contrast
+    ratio against the fill, per the WCAG 2.x formula."""
     h = hex_color.lstrip("#")
     r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
-    yiq = (r * 299 + g * 587 + b * 114) / 1000
-    return INK_PRIMARY if yiq >= 128 else "#ffffff"
+
+    def _linear(channel):
+        c = channel / 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r_lin, g_lin, b_lin = _linear(r), _linear(g), _linear(b)
+    luminance = 0.2126 * r_lin + 0.7152 * g_lin + 0.0722 * b_lin
+    contrast_white = (1.0 + 0.05) / (luminance + 0.05)
+    contrast_black = (luminance + 0.05) / (0.0 + 0.05)
+    return INK_PRIMARY if contrast_black >= contrast_white else "#ffffff"
 
 
 def _jitter(n, amplitude, seed):
@@ -265,7 +275,7 @@ def _render_time_to_rejection(results_dir, charts_dir):
     n_excluded = int(rows[0]["n_excluded_missing_dates"]) if rows else 0
     x = [int(r["days_to_rejection"]) for r in rows]
     y = _jitter(len(rows), amplitude=0.35, seed=4001)
-    hover = ["%s &middot; %s / %s &middot; %d day(s) to rejection"
+    hover = ["%s · %s / %s · %d day(s) to rejection"
              % (r["app_id"], r["channel"], r["tier"], int(r["days_to_rejection"]))
              for r in rows]
 
@@ -410,7 +420,7 @@ def _render_ops(results_dir, charts_dir):
     jit = _jitter(len(rows), amplitude=0.28, seed=4002)
     x = [int(r["days_open"]) for r in rows]
     y = [cat_idx[r["category"]] + jit[i] for i, r in enumerate(rows)]
-    hover = ["%s &middot; %s &middot; %d day(s) open &middot; raised %sx"
+    hover = ["%s · %s · %d day(s) open · raised %sx"
              % (r["op_id"], r["category"], int(r["days_open"]), r["times_raised"])
              for r in rows]
 
@@ -469,6 +479,12 @@ def _render_finance(results_dir, charts_dir):
     line_rows = [r for r in rows if r["buffer_pct"].strip() != ""]
     event_rows = [r for r in rows
                   if r["income_changed"].strip().lower() == "true"]
+    # Two rows can share the same event_date (a marker-only null-buffer
+    # row plus a real buffer-pct row both flagged income_changed=true) -
+    # dedupe by date so the chart draws exactly one marker/line/label per
+    # unique date instead of overlapping duplicates. Order doesn't matter
+    # for a boolean marker-only event.
+    event_rows = list({r["event_date"]: r for r in event_rows}.values())
     n_series = int(bool(line_rows)) + int(bool(event_rows))
     show_legend = n_series >= 2
 

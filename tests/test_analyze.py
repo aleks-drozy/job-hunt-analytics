@@ -90,4 +90,9 @@ def test_funnel_summary_computes_interviews_and_as_of_from_data(tmp_path):
     s = _read(out, "funnel_summary.csv")[0]
     assert int(s["n_tracked"]) == 6
     assert int(s["n_interviews"]) == 0      # computed, not hardcoded
-    assert s["as_of"] == "2026-01-15"       # max date anywhere in applications
+    # max(applied_date, status_date) only - followup_due (2026-01-15 on
+    # A001) is a future scheduled reminder, not an observation, and is
+    # excluded so as_of never overstates data currency. Recomputed from
+    # the fixture: MAX(applied_date)=2026-01-10 (A006), MAX(status_date)
+    # =2026-01-09 (A002/A005) -> GREATEST(...) = 2026-01-10.
+    assert s["as_of"] == "2026-01-10"

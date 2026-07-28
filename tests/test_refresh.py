@@ -129,7 +129,11 @@ def test_clean_results_pass_and_row_counts_are_printed(tmp_path, monkeypatch, ca
     assert calls["render_all"] == (tmp_path / "results", tmp_path / "charts")
 
     out = capsys.readouterr().out
-    assert "summary" in out and "1" in out  # the row-counts dict got printed
+    # Precise check on the actual printed line (refresh.py does
+    # `print("analyses run:", row_counts)`, and Python's dict repr uses
+    # single quotes) - not a loose "summary" in out / "1" in out
+    # substring check that would also pass on unrelated output.
+    assert "analyses run: {'summary': 1}" in out
     assert (tmp_path / "charts" / "headline.html").exists()
 
 
