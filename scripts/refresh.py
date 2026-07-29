@@ -27,6 +27,7 @@ from job_analytics.anonymize import ensure_mapped, load_map, save_map  # noqa: E
 from job_analytics.export_public import UnmappedCompanyError, export  # noqa: E402
 from job_analytics.load_db import build  # noqa: E402
 from scripts.analyze import run_analyses  # noqa: E402
+from scripts.build_dashboard import build_dashboard  # noqa: E402
 from scripts.render import render_all  # noqa: E402
 from scripts.sanitize_check import positive_control, scan  # noqa: E402
 
@@ -95,6 +96,7 @@ def main():
         row_counts = run_analyses(REPO / "export", sql_dir, results_dir)
         print("analyses run:", row_counts)
         render_all(results_dir, REPO / "charts")
+        build_dashboard(results_dir, REPO / "charts", REPO / "index.html")
         results_findings = scan(results_dir, banned)
         if results_findings:
             for f in results_findings:

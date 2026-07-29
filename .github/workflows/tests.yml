@@ -23,6 +23,8 @@ jobs:
       # from tests/test_render.py, which runs the same GENERIC regexes
       # from sanitize_check.py directly against the rendered chart HTML
       # (see test_chart_html_passes_the_generic_leak_regexes) and already
-      # runs as part of the pytest step above.
+      # runs as part of the pytest step above. index.html is excluded for
+      # the same reason and is covered the same way, by
+      # tests/test_build_dashboard.py.
       - name: sanitize gate on results (generic + structural rules)
         run: python scripts/sanitize_check.py results --ci

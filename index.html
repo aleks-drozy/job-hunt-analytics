@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instrumented Job Hunt</title>
+<meta name="description" content="A descriptive dashboard over one graduate's job hunt - n = 50 applications, 65 operations, 19 days of coverage. No inference, no company names, no external requests.">
+<style>
+:root{
+  --paper:#f9f9f7;
+  --surface:#fcfcfb;
+  --ink:#0b0b0b;
+  --muted:#52514e;
+  --faint:#898781;
+  --rule:#e1e0d9;
+  --rule-strong:#c3c2b7;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+::selection{background:var(--ink);color:var(--paper)}
+a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--muted)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+main{max-width:52rem;margin:0 auto;padding:0 1.25rem 4rem}
+.prose{max-width:68ch}
+header{padding-top:clamp(1.6rem,5vw,2.6rem)}
+.overline{font:600 .72rem/1 var(--mono);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(2rem,6vw,3.2rem)/1.08 var(--sans);letter-spacing:-.01em;
+  margin:.4rem 0 .9rem}
+.rules{border-top:3px solid var(--rule-strong);border-bottom:1px solid var(--rule-strong);
+  height:6px;margin:.2rem 0 1rem}
+.masthead-meta{display:flex;gap:.5rem 1.4rem;flex-wrap:wrap;
+  font:.8rem/1.5 var(--mono);color:var(--muted)}
+.masthead-meta a{color:inherit}
+h2{font:600 .78rem/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:clamp(2.2rem,6vw,2.8rem) 0 1rem;
+  display:flex;align-items:center;gap:.7rem}
+h2::after{content:"";flex:1;border-top:1px solid var(--rule)}
+h2 .no{color:var(--muted)}
+h3{font:600 .95rem var(--sans);margin:1.3rem 0 .4rem;color:var(--ink)}
+p{margin:.5rem 0}
+.framing{border:1px solid var(--rule);padding:1.1rem 1.25rem;margin-top:1.2rem;
+  background:var(--surface)}
+.framing p{margin:.3rem 0}
+.note{color:var(--muted);font-size:.92rem}
+.tiles{display:flex;flex-wrap:wrap;border-top:1px solid var(--rule);
+  border-left:1px solid var(--rule)}
+.tile{flex:1 1 150px;border-right:1px solid var(--rule);
+  border-bottom:1px solid var(--rule);padding:1rem 1.15rem}
+.tile .label{font:.76rem var(--mono);color:var(--muted);margin:0 0 .4rem;
+  text-transform:uppercase;letter-spacing:.05em}
+.tile .value{font:600 clamp(1.6rem,4vw,2.15rem) var(--mono);
+  font-variant-numeric:tabular-nums;margin:0;color:var(--ink)}
+.tile.emph{border-top:3px solid var(--ink)}
+.tile.emph .value{font-size:clamp(1.9rem,5vw,2.6rem)}
+.caption{color:var(--muted);font-size:.92rem;margin-top:.7rem;max-width:68ch}
+.chart-frame{border:1px solid var(--rule);margin-top:1rem}
+iframe{width:100%;border:0;background:var(--surface);display:block}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font:.85rem var(--mono);
+  font-variant-numeric:tabular-nums;margin-top:.6rem}
+caption{text-align:left;font:.76rem var(--mono);color:var(--muted);
+  padding-bottom:.4rem;max-width:68ch}
+th,td{text-align:right;padding:.4rem .5rem;border-bottom:1px solid var(--rule);
+  white-space:nowrap}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td:last-child,th:last-child{padding-right:0}
+thead th{font-weight:600;color:var(--muted);border-bottom:2px solid var(--rule-strong)}
+ul.cannot,ol.repro{padding-left:1.2rem;max-width:68ch}
+ul.cannot li,ol.repro li{margin:.4rem 0}
+footer{margin-top:3rem}
+.colophon{border-top:3px solid var(--rule-strong);padding-top:.9rem;
+  font:.78rem/1.7 var(--mono);color:var(--muted);max-width:68ch}
+/* This page has no motion of any kind - no transitions, no keyframes, no
+   script - so a prefers-reduced-motion branch would be dead CSS; there is
+   nothing here to turn off. */
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="overline">One graduate &middot; one month &middot; n = 50</p>
+<h1>Instrumented Job Hunt</h1>
+<div class="rules" aria-hidden="true"></div>
+<p class="masthead-meta"><span>2026-07-08 to 2026-07-28 &middot; 19 days of coverage</span><span>As of 2026-07-21</span><a href="README.md">The full writeup</a></p>
+</header>
+<div class="framing prose">
+<p>This page is descriptive, not inferential. At n = 50 applications, 65 operations and 19 days of coverage, nothing here supports a significance test, a confidence interval, or a causal claim - a single person's one-month sample doesn't carry that kind of weight. Every figure below comes from the committed, anonymised CSVs in results/, cell for cell.</p>
+</div>
+<section id="s1">
+<h2><span class="no">&sect;1</span> Headline</h2>
+<div class="tiles"><div class="tile"><p class="label">Tracked</p><p class="value">50</p></div><div class="tile"><p class="label">Submitted</p><p class="value">43</p></div><div class="tile"><p class="label">Rejected</p><p class="value">15</p></div><div class="tile"><p class="label">No response yet</p><p class="value">28</p></div><div class="tile emph"><p class="label">Interviews</p><p class="value">0</p></div></div>
+<p class="caption">"No response yet" is censored, not ghosted: these applications are still open as of 2026-07-21, not confirmed dead.</p>
+</section>
+<section id="s2">
+<h2><span class="no">&sect;2</span> Funnel</h2>
+<div class="chart-frame"><iframe src="charts/funnel.html" title="Sankey diagram of the application funnel, from tracked applications to final outcome" height="470" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">Of 50 tracked applications: 43 submitted, 5 closed by the employer before ever being submitted, 1 skipped, and 1 reached an outcome the export couldn't classify cleanly. Of the 43 submitted: 15 rejected, 28 with no response yet. ‘Employer closed’ conflates a posting withdrawn by the employer with one filled by someone else - the export doesn't distinguish the two.</p>
+</section>
+<section id="s3">
+<h2><span class="no">&sect;3</span> Time to rejection</h2>
+<div class="chart-frame"><iframe src="charts/time_to_rejection.html" title="Dot strip of days elapsed before each timed rejection" height="470" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">10 of 15 rejections had both an applied date and a status date and could be timed; 5 are excluded from the chart for missing one of those dates - excluded, not dropped: they are still counted in the 15 above. Timed rejections ranged 0-5 days.</p>
+</section>
+<section id="s4">
+<h2><span class="no">&sect;4</span> Channels</h2>
+<div class="chart-frame"><iframe src="charts/channels.html" title="Horizontal stacked bars of outcomes by channel" height="420" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">Applications sorted into 6 channels: other 22, company_portal 8, linkedin 8, indeed 5, workday 4, jooble 3. LinkedIn shows a 0.0% rejection rate across 8 submitted applications (0 of 8 rejected). That is not a good result: nothing came back at all. Workday, by contrast, shows 3 of 4 rejected.</p>
+<div class="scroll"><table><caption>Per-channel outcomes, from results/channel_outcomes.csv - jooble has no submissions, so its rejection rate is undefined (shown as —, never 0%)</caption><thead><tr><th>Channel</th><th>Total</th><th>Submitted</th><th>Rejected</th><th>Rejection rate</th></tr></thead><tbody><tr><td>other</td><td>22</td><td>20</td><td>10</td><td>50.0%</td></tr><tr><td>company_portal</td><td>8</td><td>7</td><td>1</td><td>14.3%</td></tr><tr><td>linkedin</td><td>8</td><td>8</td><td>0</td><td>0.0%</td></tr><tr><td>indeed</td><td>5</td><td>4</td><td>1</td><td>25.0%</td></tr><tr><td>workday</td><td>4</td><td>4</td><td>3</td><td>75.0%</td></tr><tr><td>jooble</td><td>3</td><td>0</td><td>0</td><td>—</td></tr></tbody></table></div>
+</section>
+<section id="s5">
+<h2><span class="no">&sect;5</span> Tiers</h2>
+<div class="chart-frame"><iframe src="charts/tiers.html" title="Horizontal stacked bars of outcomes by tier" height="300" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">Entry: 3 of 11 rejected. Stretch: 1 of 6 rejected. Unspecified: 11 of 33 rejected - unspecified carries most of the volume because tier is derived from role titles, and most role titles don't state a level.</p>
+</section>
+<section id="s6">
+<h2><span class="no">&sect;6</span> Operations</h2>
+<div class="chart-frame"><iframe src="charts/ops.html" title="Dot strip of ops resolution time by category" height="500" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">65 operations across 6 categories: 41 closed, 22 open, 2 snoozed. Of the closed ones, 24 carry a machine-readable close date (17 do not); those that do took 0-6 days.</p>
+</section>
+<section id="s7">
+<h2><span class="no">&sect;7</span> Finance</h2>
+<div class="chart-frame"><iframe src="charts/finance.html" title="Step line of financial buffer percentage over time, with income-change markers" height="470" loading="lazy" scrolling="no"></iframe></div>
+<p class="caption">Buffer moved from 66.0% of target on 2026-07-10 to 88.0% on 2026-07-24, with income-change markers on 2 distinct dates. No monetary amount exists anywhere in this repository, by design - only the percentage of a private target.</p>
+</section>
+<section id="s8">
+<h2><span class="no">&sect;8</span> What this cannot tell you</h2>
+<ul class="cannot prose">
+<li>The sample is small and covers one month, one person, and one job market - none of this generalises.</li>
+<li>Several of the rates above are computed over small denominators (single digits up to the thirties); a couple of applications going differently would move a percentage a lot.</li>
+<li>‘No response yet’ is censored at the export date, not a confirmed non-response - some of it will still convert.</li>
+<li>Tier (entry/stretch) is inferred from role titles, not self-reported, and most titles don't state a level.</li>
+<li>‘Closed’ in the funnel conflates postings withdrawn by the employer with postings filled by someone else.</li>
+<li>Nothing on this page is causal. A channel or tier with a higher rejection rate is not shown to cause worse outcomes.</li>
+</ul>
+</section>
+<section id="s9">
+<h2><span class="no">&sect;9</span> Reproduce it</h2>
+<ol class="repro prose">
+<li><a href="export/">export/*.csv</a> - the anonymised, gate-scanned export.</li>
+<li><a href="sql/">sql/*.sql</a> - the analyses run over that export.</li>
+<li><a href="results/">results/*.csv</a> - the outputs, gate-scanned again before being committed.</li>
+<li><a href="charts/">charts/*.html</a> - one standalone plotly document per chart, rendered from results/ only.</li>
+<li>This page - generated from results/ only by scripts/build_dashboard.py, re-rendering nothing.</li>
+</ol>
+<p class="caption">Coverage: 19 days (2026-07-08 to 2026-07-28). Inbox activity was logged on 8 of those days (191 messages seen, 7 suppressed as sensitive before export).</p>
+</section>
+<footer>
+<div class="colophon">
+<p>Light mode only: the six charts above are baked light against a validated palette; a dark page around light iframes would need a second, separately-validated dark palette for every chart, which is out of scope here. This page makes no external requests - it is pure static HTML generated at build time, loading nothing but the local charts/ files above. It contains no company names: every field on it is either an aggregate count or an anonymised category from the committed export.</p>
+</div>
+</footer>
+</main>
+</body>
+</html>

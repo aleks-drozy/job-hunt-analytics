@@ -118,8 +118,20 @@ def test_clean_results_pass_and_row_counts_are_printed(tmp_path, monkeypatch, ca
         charts_dir.mkdir(parents=True, exist_ok=True)
         (charts_dir / "headline.html").write_text("<html></html>", encoding="utf-8")
 
+    def fake_build_dashboard(results_dir, charts_dir, out_path):
+        # Stubbed like run_analyses/render_all above: this fixture's fake
+        # results_dir only has a synthetic summary.csv, not the real
+        # results/*.csv shape build_dashboard.collect_facts requires, so
+        # the real function can't run here. Only the wiring (right args,
+        # right place - after render_all, before the gate) is under test.
+        calls["build_dashboard"] = (refresh.Path(results_dir),
+                                    refresh.Path(charts_dir), refresh.Path(out_path))
+        refresh.Path(out_path).write_text("<html></html>", encoding="utf-8")
+        return refresh.Path(out_path)
+
     monkeypatch.setattr(refresh, "run_analyses", fake_run_analyses)
     monkeypatch.setattr(refresh, "render_all", fake_render_all)
+    monkeypatch.setattr(refresh, "build_dashboard", fake_build_dashboard)
 
     assert refresh.main() == 0
 
@@ -127,6 +139,8 @@ def test_clean_results_pass_and_row_counts_are_printed(tmp_path, monkeypatch, ca
     assert calls["run_analyses"] == (tmp_path / "export", tmp_path / "sql",
                                      tmp_path / "results")
     assert calls["render_all"] == (tmp_path / "results", tmp_path / "charts")
+    assert calls["build_dashboard"] == (tmp_path / "results", tmp_path / "charts",
+                                        tmp_path / "index.html")
 
     out = capsys.readouterr().out
     # Precise check on the actual printed line (refresh.py does
@@ -135,6 +149,7 @@ def test_clean_results_pass_and_row_counts_are_printed(tmp_path, monkeypatch, ca
     # substring check that would also pass on unrelated output.
     assert "analyses run: {'summary': 1}" in out
     assert (tmp_path / "charts" / "headline.html").exists()
+    assert (tmp_path / "index.html").exists()
 
 
 def test_banned_term_in_results_fails_the_gate_and_reuses_export_banned_list(
@@ -159,8 +174,15 @@ def test_banned_term_in_results_fails_the_gate_and_reuses_export_banned_list(
         render_called.append(True)
         refresh.Path(charts_dir).mkdir(parents=True, exist_ok=True)
 
+    def fake_build_dashboard(results_dir, charts_dir, out_path):
+        # Stubbed for the same reason as the test above: this fixture's
+        # fake results_dir doesn't have the real results/*.csv shape.
+        refresh.Path(out_path).write_text("<html></html>", encoding="utf-8")
+        return refresh.Path(out_path)
+
     monkeypatch.setattr(refresh, "run_analyses", fake_run_analyses)
     monkeypatch.setattr(refresh, "render_all", fake_render_all)
+    monkeypatch.setattr(refresh, "build_dashboard", fake_build_dashboard)
 
     assert refresh.main() == 2
     assert render_called == [True]  # brief's order: analyze -> render -> gate
