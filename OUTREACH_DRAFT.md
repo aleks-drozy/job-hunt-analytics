@@ -39,7 +39,7 @@ Status: REVIEW - NOT SENT. Proposed slot: Wednesday 2026-08-12 09:30
 >
 > n is 50. This describes one month of one person's job search and nothing more: no channel, no tier, no future application.
 >
-> CS and Software Engineering graduate (Maynooth, 2026) in Dublin, looking for software engineering roles.
+> CS and Software Engineering graduate (2026), Dublin, looking for software engineering roles.
 >
 > If you are on the hiring side: when a candidate hears nothing back from your company, is that a rejection, a queue, or something that just got lost?
 >
