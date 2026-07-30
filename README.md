@@ -43,7 +43,7 @@ Four things are deliberately excluded, and none of them are gaps in the pipeline
 
 Private markdown → a local, gitignored DuckDB → an anonymising export step → `scripts/sanitize_check.py`, a CI gate → the committed `export/*.csv` files this document is built from.
 
-The gate was attacked before it was trusted. An adversarial review against the gate itself found seven real gaps in what it could catch — the worst was a hand-crafted CSV row with one extra, unquoted field: because nothing validated a row's cell count against its header, that extra field could carry a real company name straight past every other check, silently. All seven were fixed, each with its own red-before/green-after regression test (`tests/test_sanitize_check.py`), and the gate was independently re-verified before this export existed at all.
+The gate was attacked before it was trusted. An adversarial review of the gate found 8 real defects, each fixed with its own red-before/green-after regression test — 5 leak paths and 3 fail-open defects in the gate's own self-check. The worst leak path was a hand-crafted CSV row with one extra, unquoted field: because nothing validated a row's cell count against its header, that extra field could carry a real company name straight past every other check, silently. All 8 were fixed, each with its own regression test (`tests/test_sanitize_check.py`), and the gate was independently re-verified before this export existed at all.
 
 ## What the numbers say
 

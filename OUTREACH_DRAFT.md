@@ -5,11 +5,8 @@ next to the repo it describes. Nothing in this file has been posted,
 published, or sent anywhere. Alex reviews, edits, and posts manually.
 
 Full grounding, sourcing, character counts, posting-schedule reasoning, and
-prepared replies for likely comments live in the source vault files:
-
-- `C:\Users\Alex\ObsidianVault\claude-memory\12-jarvis\outreach\linkedin-2026-08-12-draft-job-hunt-analytics-zero-interviews.md`
-- `C:\Users\Alex\ObsidianVault\claude-memory\12-jarvis\outreach\linkedin-2026-08-26-draft-job-hunt-analytics-shipped-live.md`
-- `C:\Users\Alex\ObsidianVault\claude-memory\23-job-hunt-analytics\CV-BULLET-DRAFT.md`
+prepared replies for likely comments live in the private vault, not in this
+repo.
 
 The two LinkedIn drafts cover the same repo from different angles (data
 result vs. build/ship process) and are flagged in their own files as
@@ -54,8 +51,7 @@ Status: REVIEW - NOT SENT. Proposed slot: Wednesday 2026-08-12 09:30
 Note: the source draft's original blocker ("this post cannot go out until
 Alex decides to publish the repository") is now factually stale — the repo
 is public and Pages is live as of 2026-07-29/30. That correction has not
-yet been written back into the source vault file; see the outstanding-gaps
-note in this session's report.
+yet been written back into the source vault file.
 
 ---
 
@@ -69,7 +65,7 @@ blocker.
 >
 > The dataset is my own job search. The pipeline: private markdown trackers, a local database, an anonymising export step, nine SQL queries, seven charts, a static dashboard. Every stage is a committed, reviewable artifact, not a notebook. Nine SQL files anyone can read and rerun against the public export alone, no private access required.
 >
-> The privacy gate got attacked on purpose before I trusted it with anything real. An adversarial pass found seven genuine gaps, the worst one a hand-crafted CSV row with one extra field that could have smuggled a real name past every check, because nothing validated a row's shape against its header. Fixed and reverified before the first export ever existed.
+> The privacy gate got attacked on purpose before I trusted it with anything real. An adversarial review of the gate found 8 real defects, each fixed with its own red-before/green-after regression test — 5 leak paths and 3 fail-open defects in the gate's own self-check. The worst leak path was a hand-crafted CSV row with one extra field that could have smuggled a real name past every check, because nothing validated a row's shape against its header. Fixed and reverified before the first export ever existed.
 >
 > Every piece was built, then separately reviewed by a fresh pass with no memory of writing it, specifically hunting for what I would have missed marking my own homework. Before any of it went public, that process found real bugs. A SQL builder that crashed on any file path with an apostrophe in it. A chart that faked a two pixel gap between bars with a coloured stroke, which only looked right because the background happened to match the stroke colour. A chart label that failed accessibility contrast because I picked the wrong colour formula, 2.8 to 1 instead of the 4.5 to 1 the standard requires. And the one that stung most: the page's "as of" date had quietly picked up a future, scheduled date instead of the last real observation, overstating how current the whole thing was by ten days.
 >
@@ -93,4 +89,4 @@ Status: REVIEW - NOT ADDED TO THE CV. Full entry, claim-trace table, and
 placement notes are in `CV-BULLET-DRAFT.md` (linked above). URL now
 permitted since the repo is public.
 
-> Built a tested DuckDB ETL pipeline (164 tests) that parses messy markdown trackers into an anonymised public CSV export behind a CI-enforced privacy gate whose adversarial review closed 7 real leak paths, then published 9 SQL analyses over 50 applications as a static dashboard (`aleks-drozy.github.io/job-hunt-analytics`) where every rate appears beside its raw numerator and denominator.
+> Built a tested DuckDB ETL pipeline (164 tests) that parses messy markdown trackers into an anonymised public CSV export behind a CI-enforced privacy gate whose adversarial review found 8 real defects (5 leak paths, 3 fail-open defects in the gate's own self-check), each closed with its own red-before/green-after regression test, then published 9 SQL analyses over 50 applications as a static dashboard (`aleks-drozy.github.io/job-hunt-analytics`) where every rate appears beside its raw numerator and denominator.
