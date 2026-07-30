@@ -1,3 +1,6 @@
-duckdb
-pytest
-plotly
+duckdb==1.5.5
+pytest==9.1.1
+plotly==6.9.0
+# charts/plotly.min.js is vendored at plotly.js v3.7.0 (bundled by the
+# plotly==6.9.0 Python package). If the plotly pin above ever moves,
+# charts/plotly.min.js must be re-vendored to match.
