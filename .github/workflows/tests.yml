@@ -21,10 +21,12 @@ jobs:
       # whitelists, row_length, anon_pattern) that sanitize_check.py
       # applies to every file it scans. Chart leak coverage instead comes
       # from tests/test_render.py, which runs the same GENERIC regexes
-      # from sanitize_check.py directly against the rendered chart HTML
-      # (see test_chart_html_passes_the_generic_leak_regexes) and already
-      # runs as part of the pytest step above. index.html is excluded for
-      # the same reason and is covered the same way, by
+      # from sanitize_check.py directly against both the synthetically
+      # rendered chart HTML (test_chart_html_passes_the_generic_leak_regexes)
+      # and the real, committed charts/*.html files that are actually
+      # published (test_real_committed_charts_pass_the_generic_leak_regexes)
+      # - already runs as part of the pytest step above. index.html is
+      # excluded for the same reason and is covered the same way, by
       # tests/test_build_dashboard.py.
       - name: sanitize gate on results (generic + structural rules)
         run: python scripts/sanitize_check.py results --ci

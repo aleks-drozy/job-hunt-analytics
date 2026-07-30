@@ -9,6 +9,9 @@ from scripts.render import INK_PRIMARY, _render_finance, _text_on_fill, render_a
 from scripts.sanitize_check import GENERIC
 from tests.test_analyze import _fake_export
 
+REPO = Path(__file__).resolve().parents[1]
+CHARTS_REAL = REPO / "charts"
+
 
 def _rendered(tmp_path):
     results = tmp_path / "results"
@@ -40,6 +43,21 @@ def test_chart_html_passes_the_generic_leak_regexes(tmp_path):
         text = p.read_text(encoding="utf-8")
         for name, rx in GENERIC:
             assert not rx.search(text), (p.name, name, rx.search(text).group(0))
+
+
+def test_real_committed_charts_pass_the_generic_leak_regexes():
+    """The synthetic-fixture test above (test_chart_html_passes_the_generic_
+    leak_regexes) only ever scans charts rendered from _fake_export - it
+    never touches the real, committed charts/*.html files that are what
+    actually gets published. Mirrors test_build_dashboard.py's pattern of
+    scanning the real on-disk artifact directly."""
+    html_files = list(CHARTS_REAL.glob("*.html"))
+    assert html_files, "no committed charts/*.html files found at %s" % CHARTS_REAL
+    for p in html_files:
+        text = p.read_text(encoding="utf-8")
+        for name, rx in GENERIC:
+            m = rx.search(text)
+            assert not m, (p.name, name, m.group(0) if m else None)
 
 
 def test_text_on_fill_picks_ink_not_white_for_aqua():
