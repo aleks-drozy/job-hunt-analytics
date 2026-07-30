@@ -1,5 +1,7 @@
 # Instrumented Job Hunt
 
+**Live dashboard: https://aleks-drozy.github.io/job-hunt-analytics/**
+
 A month of one graduate's job search and AI-assistant operations, parsed from private markdown into an anonymised public dataset, analysed in SQL, published as a static page.
 
 This document covers 50 tracked applications, 65 logged assistant operations, 15 finance log entries, and 19 days of daily debriefs, all from the same person, over the window 2026-07-08 to 2026-07-28. Every number below is descriptive, not inferential: there are no significance tests, no confidence intervals, and no causal claims anywhere in this repository. At this sample size, a rate computed over, say, 4 applications describes those 4 applications and nothing else — it generalises to no channel, no tier, and no future application.
