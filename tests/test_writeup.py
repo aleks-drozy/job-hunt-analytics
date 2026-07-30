@@ -59,8 +59,23 @@ def test_readme_passes_every_generic_leak_regex():
 
 
 def test_no_dead_or_nonexistent_repo_links():
-    assert "github.com" not in README.lower()
-    assert "github.io" not in README.lower()
+    """The repo was private when this test was first written, so any
+    github.com/github.io mention would have been a fabricated, unverifiable
+    link and was banned outright. The repo went public and Pages went live
+    on 2026-07-29 (both re-verified live on 2026-07-30: `gh repo view` ->
+    PUBLIC, `gh api .../pages` -> "status":"built", site returns HTTP 200).
+    The invariant that matters is unchanged - no dead or fabricated link -
+    but it is now enforced by allow-listing the exact, real, live URLs
+    instead of banning the domains wholesale.
+    """
+    allowed = {
+        "https://github.com/aleks-drozy/job-hunt-analytics",
+        "https://aleks-drozy.github.io/job-hunt-analytics/",
+    }
+    found = re.findall(r"https?://(?:github\.com|[\w.-]+\.github\.io)/\S*", README)
+    for url in found:
+        assert url.rstrip(".,)*") in allowed, "unexpected repo/pages link in README.md: %r" % url
+    assert found, "expected the live dashboard link to be present now that the repo is public"
 
 
 def test_banned_terms_absent_if_local_list_exists():
