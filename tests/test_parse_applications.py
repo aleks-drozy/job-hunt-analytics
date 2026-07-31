@@ -66,7 +66,7 @@ def test_bold_wrapped_company_name_strips_markup(tmp_path):
     # the tracker), and the anon-ID mapping treats company name as an exact
     # key, so "**Acme Robotics**" and "Acme Robotics" must not become two
     # different companies.
-    row = "| **Acme Robotics** | Store Assistant | Rezoomo | 2026-07-01 | **Applied** ✅ | — | declined via message |"
+    row = "| **Acme Robotics** | Store Assistant | Vacansee | 2026-07-01 | **Applied** ✅ | — | declined via message |"
     path = _write(tmp_path, [row])
     r = parse(path)[0]
     assert r["company"] == "Acme Robotics"
@@ -117,11 +117,11 @@ def test_unspecified_tier_when_no_keyword_matches(tmp_path):
     "channel_cell,expected",
     [
         ("LinkedIn (07-10)", "linkedin"),
-        ("Workday MMC", "workday"),
+        ("Workday NWS", "workday"),
         ("Indeed (Harri ATS)", "indeed"),
         ("Jooble (stale)", "jooble"),
         ("careers.northwind.com", "company_portal"),
-        ("MU e-recruitment portal", "company_portal"),
+        ("GCU e-recruitment portal", "company_portal"),
         ("Pied Piper Staffing Agency", "agency"),
         ("applied outside Jarvis", "other"),
     ],

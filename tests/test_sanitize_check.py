@@ -175,3 +175,29 @@ def test_empty_export_dir_fails_closed(tmp_path):
     r = subprocess.run([PY, "scripts/sanitize_check.py", str(empty), "--ci"],
                        capture_output=True, text=True)
     assert r.returncode != 0, r.stdout + r.stderr
+
+
+def test_banned_term_word_boundary_true_positive_and_negative(tmp_path):
+    """Word-boundary matching: a short banned term standing alone is a
+    finding; the same term buried inside a longer word is not (the audit
+    found a 3-char term false-positived on 'groups'/'mixups')."""
+    out = _clean_export(tmp_path)
+    (out / "extra.csv").write_text(
+        "note\n"
+        "shift at vex again this week\n"       # line 2: standalone -> caught
+        "convexity mixups in study groups\n",  # line 3: substring -> ignored
+        encoding="utf-8")
+    findings = scan(out, banned_terms=["vex"])
+    banned = [f for f in findings if "[banned]" in f]
+    assert any("extra.csv:2" in f for f in banned), findings
+    assert not any("extra.csv:3" in f for f in banned), findings
+
+
+def test_banned_term_ending_in_non_word_char_still_caught(tmp_path):
+    """Regression pinning the lookaround choice: a term ending in ')'
+    (real company_map keys do) would NEVER match under re.escape(term)+r'\\b'."""
+    out = _clean_export(tmp_path)
+    (out / "extra.csv").write_text(
+        "note\nrow mentions Fictional Corp (FC) verbatim\n", encoding="utf-8")
+    findings = scan(out, banned_terms=["Fictional Corp (FC)"])
+    assert any("[banned]" in f for f in findings), findings

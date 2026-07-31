@@ -33,7 +33,7 @@ _PAREN_PCT_RE = re.compile(r'\((\d{1,3}(?:\.\d+)?)\s*%\)')
 _BUFFER_TARGET_RE = re.compile(r'buffer|target', re.IGNORECASE)
 
 _INCOME_CHANGE_RE = re.compile(
-    r'\b(income|salary|pay(?:check|slip)?|UPS|parents?)\b.{0,40}'
+    r'\b(income|salary|pay(?:check|slip)?|wage|shift(?:s)?|parents?)\b.{0,40}'
     r'\b(chang\w*|stop\w*|drop\w*|start\w*|confirm\w*|rebuil\w*)',
     re.IGNORECASE,
 )

@@ -18,14 +18,16 @@ check exercises the real vault file but asserts only *structural* properties (ro
 no exceptions, required fields non-empty) — never specific real values — so it's safe to
 keep even if someone reads the test file later.
 
-## Confirmed real formats (read directly from the live vault 2026-07-24, informs fixtures)
+## Confirmed real formats (read directly from the live vault 2026-07-24, informs fixtures;
+example strings below are fabricated equivalents preserving the real messiness, per the
+fixture policy above)
 
 **JOB_SEARCH.md** `## Applications` table:
 `| Company | Role | Link | Applied | Status | Follow-up due | Notes |`
 - Company: sometimes `~~Struck Through~~` for skipped/withdrawn rows.
 - Link column is actually **channel free text**, not a URL: `"LinkedIn (07-10)"`,
-  `"Workday MMC"`, `"Jooble (stale)"`, `"Indeed (Harri ATS)"`, `"applied outside Jarvis"`,
-  `"MU e-recruitment portal"`, `"amris ATS"`. Needs a classifier, not a literal match.
+  `"Workday NWS"`, `"Jooble (stale)"`, `"Indeed (Harri ATS)"`, `"applied outside Jarvis"`,
+  `"GCU e-recruitment portal"`, `"amris ATS"`. Needs a classifier, not a literal match.
 - Applied: `"2026-07-12"`, `"—"`, `"pre-2026-07-09"`, `"unknown (applied outside Jarvis)"`.
   Treat unparseable forms as null (excluded from response-time calc, still counted in funnel).
 - Status: bold markdown + optional emoji + parenthetical date: `"**Rejected** (2026-07-17)"`,
@@ -47,7 +49,7 @@ keep even if someone reads the test file later.
 **already-normalized** buffer percentage the entry itself states, e.g. `"(88%)"`,
 `"Buffer now 500/750 (67%)"`, `"jumps from 57% to 88%"` -> take the percentage number(s), never
 the surrounding euro figures. Also flag `income_changed: true` for entries whose text matches
-`/income|UPS|parents.*(pay|stop|drop)/i` — a boolean event marker, no amount. This matches the
+`/income|wage|shift|parents.*(pay|stop|drop)/i` — a boolean event marker, no amount. This matches the
 plan's own phrasing exactly: "savings as % of buffer target... income as event markers... No
 absolute euro amounts."
 

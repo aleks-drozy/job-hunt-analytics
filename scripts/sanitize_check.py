@@ -66,6 +66,42 @@ def _collapse_ws(s):
     return re.sub(r"\s+", " ", s)
 
 
+def compile_banned(terms):
+    """Compile each banned term into a (term, regex) pair using lookaround
+    word-boundary matching: `(?<!\\w)term(?!\\w)`, NOT `\\bterm\\b`.
+
+    This matters: several real banned entries end in a non-word character
+    (company_map keys ending in `)` for parenthesized-acronym entries).
+    `re.escape(term) + r"\\b"` requires a word char inside the closing
+    paren's edge, so it silently never matches those terms -- a false
+    negative in a privacy gate. Lookarounds give correct "not glued to a
+    word character" semantics for any term shape, while still killing the
+    "3-char term inside a longer word" false positive (e.g. a term 'vex'
+    must not fire on 'convex' or 'mixups').
+    """
+    return [
+        (term, re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)"))
+        for term in (_collapse_ws(b.lower()) for b in terms if b.strip())
+    ]
+
+
+def load_private_terms():
+    """Load the gitignored, local-machine-only banned-term lists: every
+    real company name from data/company_map.json plus data/banned_terms.txt
+    lines. Returns an empty list if the private lists don't exist (e.g. in
+    CI, by design)."""
+    repo = Path(__file__).resolve().parents[1]
+    map_path = repo / "data" / "company_map.json"
+    terms_path = repo / "data" / "banned_terms.txt"
+    terms = []
+    if map_path.exists():
+        terms += list(json.loads(
+            map_path.read_text(encoding="utf-8"))["companies"].keys())
+    if terms_path.exists():
+        terms += terms_path.read_text(encoding="utf-8").splitlines()
+    return terms
+
+
 def scan(export_dir, banned_terms):
     export_dir = Path(export_dir)
     findings = []
@@ -81,7 +117,7 @@ def scan(export_dir, banned_terms):
                         "found in %s" % export_dir)
         return findings
 
-    banned_lower = [_collapse_ws(b.lower()) for b in banned_terms if b.strip()]
+    banned_res = compile_banned(banned_terms)
 
     for path in csv_paths:
         raw_text = path.read_text(encoding="utf-8")
@@ -116,8 +152,8 @@ def scan(export_dir, banned_terms):
                     findings.append("%s:%d  [%s]  %s"
                                     % (path.name, n, name, m.group(0)))
             low = _collapse_ws(line.lower())
-            for term in banned_lower:
-                if term in low:
+            for term, term_re in banned_res:
+                if term_re.search(low):
                     findings.append("%s:%d  [banned]  %s"
                                     % (path.name, n, term))
 
@@ -179,14 +215,7 @@ def main():
 
     banned = []
     if not args.ci:
-        repo = Path(__file__).resolve().parents[1]
-        map_path = repo / "data" / "company_map.json"
-        terms_path = repo / "data" / "banned_terms.txt"
-        if map_path.exists():
-            banned += list(json.loads(
-                map_path.read_text(encoding="utf-8"))["companies"].keys())
-        if terms_path.exists():
-            banned += terms_path.read_text(encoding="utf-8").splitlines()
+        banned = load_private_terms()
         if not banned:
             print("WARNING: local mode but no private lists found - "
                   "did you mean --ci? Refusing to pass silently.")
